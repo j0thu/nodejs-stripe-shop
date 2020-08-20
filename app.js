@@ -2,8 +2,10 @@
 const express = require('express');
 const app = express();
 
+const keys = require('./config/keys');
+
 //STRIPE
-const stripe = require('stripe')('sk_test_51H9ruvHU92bzx634kG9032mDoZwlxnSIdRlKTk04bFxOFhvrQ7vq9UoYFgT21W2psvoCxdTvQMU7Wmjs3xSnbmr50005dqcKXp');
+const stripe = require('stripe')(keys.stripeSecretKey);
 
 //BODY-PARSER
 const bodyParser = require('body-parser');
@@ -20,7 +22,7 @@ app.use(express.static(`${__dirname}/public`));
 
 //INDEX ROUTE
 app.get('/', (req, res)=>{
-    res.render('index');
+    res.render('index', {stripePublishableKey: keys.stripePublishableKey});
 })
 
 //CHARGE ROUTE
@@ -29,6 +31,14 @@ app.post('/charge', (req, res)=>{
     stripe.customers.create({
         email: req.body.stripeEmail,
         source: req.body.stripeToken,
+        name: 'Jonny Ben',
+        address: {
+          line1: '510 Townsend St',
+          postal_code: '98140',
+          city: 'San Francisco',
+          state: 'CA',
+          country: 'US',
+        }
     })
     .then(customer => stripe.charges.create({
         amount:amount, //In es6 you can jus leave it as amount,
@@ -36,9 +46,8 @@ app.post('/charge', (req, res)=>{
         currency: 'usd',
         customer: customer.id,
     }))
-    .then(charge => res.render('Success'));
+    .then(charge => res.render('success'));
 })
-
 
 //SERVER
 const PORT = process.env.PORT || 5550;
